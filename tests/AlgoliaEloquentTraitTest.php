@@ -25,9 +25,40 @@ class AlgoliaEloquentTraitTest extends TestCase
     public function testGetAlgoliaRecordDefault()
     {
         $model2 = new Model2();
+        $this->assertEquals(
+            ['id2' => 1, 'objectID' => 1],
+            $model2->getAlgoliaRecordDefault()
+        );
+
         $model4 = new Model4();
-        $this->assertEquals(array('id2' => 1, 'objectID' => 1), $model2->getAlgoliaRecordDefault());
-        $this->assertEquals(array('id2' => 1, 'objectID' => 1, 'id3' => 1, 'name' => 'test'), $model4->getAlgoliaRecordDefault());
+        $this->assertEquals(
+            ['id2' => 1, 'objectID' => 1, 'id3' => 1, 'name' => 'test'],
+            $model4->getAlgoliaRecordDefault()
+        );
+
+        $model8 = new Model8();
+        $this->assertEquals(
+            [
+                'indice_first' => [
+                    'indice_attribute_first_test' => 'value_1',
+                    'objectID'                    => 1337
+                ],
+                'indice_second' => [
+                    'indice_attribute_second_test' => 'value_2',
+                    'objectID'                    => null
+                ]
+            ],
+            $model8->getAlgoliaRecordDefault()
+        );
+
+        $this->assertEquals(
+            ['indice_attribute_first_test' => 'value_1', 'objectID' => 1337],
+            $model8->getAlgoliaRecordDefault('indice_first')
+        );
+        $this->assertEquals(
+            ['indice_attribute_second_test' => 'value_2', 'objectID' => null],
+            $model8->getAlgoliaRecordDefault('indice_second')
+        );
     }
 
     public function testPushToindex()

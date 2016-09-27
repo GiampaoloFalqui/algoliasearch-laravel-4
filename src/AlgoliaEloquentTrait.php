@@ -31,7 +31,7 @@ trait AlgoliaEloquentTrait
 
                 foreach ($models as $model) {
                     if ($modelHelper->indexOnly($model, $index->indexName)) {
-                        $records[] = $model->getAlgoliaRecordDefault();
+                        $records[] = $model->getAlgoliaRecordDefault($index->indexName);
                     }
                 }
 
@@ -240,7 +240,7 @@ trait AlgoliaEloquentTrait
          * If an array is found, it means most likely multiple indices are to be indexed.
          * We push the objectID into both arrays so that we can identify the documents in both indices the same way.
          */
-        if (is_array($record)) {
+        if (is_array($record) && is_multidimensional($record)) {
             foreach ($record as &$r) {
                 if (isset($r['objectID']) == false) {
                     $r['objectID'] = $modelHelper->getObjectId($this);
@@ -254,7 +254,7 @@ trait AlgoliaEloquentTrait
 
         if ($specificIndex) {
             if (! is_array($record) || ! isset($record[$specificIndex])) {
-                return false;
+                return $record;
             }
         }
 

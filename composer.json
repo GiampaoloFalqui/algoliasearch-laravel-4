@@ -25,7 +25,10 @@
     "autoload-dev": {
         "psr-4": {
             "AlgoliaSearch\\Tests\\": "tests/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "extra": {
         "branch-alias": {
