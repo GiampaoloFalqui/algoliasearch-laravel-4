@@ -20,15 +20,15 @@
     "autoload": {
         "psr-4": {
             "AlgoliaSearch\\Laravel\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "AlgoliaSearch\\Tests\\": "tests/"
         },
         "files": [
             "src/helpers.php"
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AlgoliaSearch\\Tests\\": "tests/"
+        }
     },
     "extra": {
         "branch-alias": {
