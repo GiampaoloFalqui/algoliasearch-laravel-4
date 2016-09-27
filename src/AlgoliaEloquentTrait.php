@@ -231,7 +231,7 @@ trait AlgoliaEloquentTrait
         $record = null;
 
         if (method_exists($this, static::$methodGetName)) {
-            $record = $this->{static::$methodGetName}($specificIndex);
+            $record = $this->{static::$methodGetName}(str_replace("_tmp", "", $specificIndex));
         } else {
             $record = $this->toArray();
         }
