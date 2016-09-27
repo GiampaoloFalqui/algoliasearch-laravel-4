@@ -21,7 +21,7 @@ trait AlgoliaEloquentTrait
         /** @var \AlgoliaSearch\Laravel\ModelHelper $modelHelper */
         $modelHelper = App::make('\AlgoliaSearch\Laravel\ModelHelper');
 
-        $indices = $modelHelper->getIndices($this);
+        $indices    = $modelHelper->getIndices($this);
         $indicesTmp = $safe ? $modelHelper->getIndicesTmp($this) : $indices;
 
         static::chunk(100, function ($models) use ($indicesTmp, $modelHelper) {
@@ -223,7 +223,7 @@ trait AlgoliaEloquentTrait
     /**
      * Methods.
      */
-    public function getAlgoliaRecordDefault()
+    public function getAlgoliaRecordDefault($specificIndex = null)
     {
         /** @var \AlgoliaSearch\Laravel\ModelHelper $modelHelper */
         $modelHelper = App::make('\AlgoliaSearch\Laravel\ModelHelper');
@@ -236,11 +236,29 @@ trait AlgoliaEloquentTrait
             $record = $this->toArray();
         }
 
-        if (isset($record['objectID']) == false) {
-            $record['objectID'] = $modelHelper->getObjectId($this);
+        /**
+         * If an array is found, it means most likely multiple indices are to be indexed.
+         * We push the objectID into both arrays so that we can identify the documents in both indices the same way.
+         */
+        if (is_array($record)) {
+            foreach ($record as &$r) {
+                if (isset($r['objectID']) == false) {
+                    $r['objectID'] = $modelHelper->getObjectId($this);
+                }
+            }
+        } else {
+            if (isset($record['objectID']) == false) {
+                $record['objectID'] = $modelHelper->getObjectId($this);
+            }
         }
 
-        return $record;
+        if ($specificIndex) {
+            if (! is_array($record) || ! isset($record[$specificIndex])) {
+                return false;
+            }
+        }
+
+        return ($specificIndex) ? $record[$specificIndex] : $record;
     }
 
     public function pushToIndex()
@@ -250,10 +268,23 @@ trait AlgoliaEloquentTrait
 
         $indices = $modelHelper->getIndices($this);
 
-        /** @var \AlgoliaSearch\Index $index */
-        foreach ($indices as $index) {
-            if ($modelHelper->indexOnly($this, $index->indexName)) {
-                $index->addObject($this->getAlgoliaRecordDefault());
+        $algoliaAttributes = $this->getAlgoliaRecordDefault();
+
+        if (is_array($algoliaAttributes)) {
+            foreach ($indices as $index) {
+                foreach ($algoliaAttributes as $indiceName => $indiceAttributes) {
+                    if ($index->indexName === $indiceName) {
+                        if ($modelHelper->indexOnly($this, $index->indexName)) {
+                            $index->addObject($indiceAttributes);
+                        }
+                    }
+                }
+            }
+        } else {
+            foreach ($indices as $index) {
+                if ($modelHelper->indexOnly($this, $index->indexName)) {
+                    $index->addObject($this->getAlgoliaRecordDefault());
+                }
             }
         }
     }

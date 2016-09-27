@@ -6,6 +6,7 @@ use AlgoliaSearch\Tests\Models\Model2;
 use AlgoliaSearch\Tests\Models\Model4;
 use AlgoliaSearch\Tests\Models\Model6;
 use AlgoliaSearch\Tests\Models\Model7;
+use AlgoliaSearch\Tests\Models\Model8;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Mockery;
@@ -60,6 +61,7 @@ class AlgoliaEloquentTraitTest extends TestCase
         $index = Mockery::mock('\AlgoliaSearch\Index');
 
         $model4 = new Model4();
+
         $modelHelper->shouldReceive('getIndices')->andReturn(array($index, $index));
         $modelHelper->shouldReceive('getObjectId')->andReturn($realModelHelper->getObjectId($model4));
 
@@ -125,6 +127,35 @@ class AlgoliaEloquentTraitTest extends TestCase
         $modelHelper->shouldReceive('getSlavesSettings')->andReturn($realModelHelper->getSlavesSettings($model7));
 
         $this->assertEquals(null, $model7->setSettings());
+    }
+
+    public function testIndexMultipleIndices()
+    {
+        $realModelHelper = App::make('\AlgoliaSearch\Laravel\ModelHelper');
+        $modelHelper = Mockery::mock('\AlgoliaSearch\Laravel\ModelHelper');
+
+        $model8 = new Model8();
+
+        $index_one = Mockery::mock('\AlgoliaSearch\Index');
+        $index_one->indexName = "indice_first";
+        $index_two = Mockery::mock('\AlgoliaSearch\Index');
+        $index_two->indexName = "indice_second";
+
+        $attributes_first  = $model8->getAlgoliaRecordDefault($index_one->indexName);
+        $attributes_second = $model8->getAlgoliaRecordDefault($index_two->indexName);
+
+        App::instance('\AlgoliaSearch\Laravel\ModelHelper', $modelHelper);
+        $modelHelper->shouldReceive('getIndices')->with($model8)->andReturn([$index_one, $index_two]);
+
+        $modelHelper->shouldReceive('getObjectId')->once()->andReturn($realModelHelper->getObjectId($model8));
+
+        $modelHelper->shouldReceive('indexOnly')->with($model8, $index_one->indexName)->once()->andReturn(true);
+        $index_one->shouldReceive('addObject')->with($attributes_first);
+
+        $modelHelper->shouldReceive('indexOnly')->with($model8, $index_two->indexName)->once()->andReturn(true);
+        $index_two->shouldReceive('addObject')->with($attributes_second);
+
+        $this->assertEquals(null, $model8->pushToIndex());
     }
 
     public function tearDown()
