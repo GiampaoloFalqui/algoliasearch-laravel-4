@@ -9,18 +9,21 @@ class Model8 extends Model
 {
     use AlgoliaEloquentTrait;
 
-    public $indices = ['indice_first', 'indice_second'];
+    public $indices = ['index_first', 'index_second'];
 
-    public function getAlgoliaRecord()
+    public function getAlgoliaRecord($indexName)
     {
-        return [
-            'indice_first' => [
+        if ($indexName === 'index_first') {
+            return [
                 'indice_attribute_first_test' => 'value_1',
                 'objectID'                    => 1337
-            ],
-            'indice_second' => [
+            ];
+        }
+
+        if ($indexName === 'index_second') {
+            return [
                 'indice_attribute_second_test' => 'value_2'
-            ]
-        ];
+            ];
+        }
     }
 }

@@ -27,37 +27,23 @@ class AlgoliaEloquentTraitTest extends TestCase
         $model2 = new Model2();
         $this->assertEquals(
             ['id2' => 1, 'objectID' => 1],
-            $model2->getAlgoliaRecordDefault()
+            $model2->getAlgoliaRecordDefault('test')
         );
 
         $model4 = new Model4();
         $this->assertEquals(
             ['id2' => 1, 'objectID' => 1, 'id3' => 1, 'name' => 'test'],
-            $model4->getAlgoliaRecordDefault()
+            $model4->getAlgoliaRecordDefault('test')
         );
 
         $model8 = new Model8();
         $this->assertEquals(
-            [
-                'indice_first' => [
-                    'indice_attribute_first_test' => 'value_1',
-                    'objectID'                    => 1337
-                ],
-                'indice_second' => [
-                    'indice_attribute_second_test' => 'value_2',
-                    'objectID'                    => null
-                ]
-            ],
-            $model8->getAlgoliaRecordDefault()
-        );
-
-        $this->assertEquals(
             ['indice_attribute_first_test' => 'value_1', 'objectID' => 1337],
-            $model8->getAlgoliaRecordDefault('indice_first')
+            $model8->getAlgoliaRecordDefault('index_first')
         );
         $this->assertEquals(
             ['indice_attribute_second_test' => 'value_2', 'objectID' => null],
-            $model8->getAlgoliaRecordDefault('indice_second')
+            $model8->getAlgoliaRecordDefault('index_second')
         );
     }
 
@@ -77,7 +63,7 @@ class AlgoliaEloquentTraitTest extends TestCase
 
         App::instance('\AlgoliaSearch\Laravel\ModelHelper', $modelHelper);
 
-        $index->shouldReceive('addObject')->times(2)->with($model4->getAlgoliaRecordDefault());
+        $index->shouldReceive('addObject')->times(2)->with($model4->getAlgoliaRecordDefault('test'));
 
         $this->assertEquals(null, $model4->pushToIndex());
     }
@@ -168,23 +154,20 @@ class AlgoliaEloquentTraitTest extends TestCase
         $model8 = new Model8();
 
         $index_one = Mockery::mock('\AlgoliaSearch\Index');
-        $index_one->indexName = "indice_first";
+        $index_one->indexName = "index_first";
         $index_two = Mockery::mock('\AlgoliaSearch\Index');
-        $index_two->indexName = "indice_second";
-
-        $attributes_first  = $model8->getAlgoliaRecordDefault($index_one->indexName);
-        $attributes_second = $model8->getAlgoliaRecordDefault($index_two->indexName);
+        $index_two->indexName = "index_second";
 
         App::instance('\AlgoliaSearch\Laravel\ModelHelper', $modelHelper);
         $modelHelper->shouldReceive('getIndices')->with($model8)->andReturn([$index_one, $index_two]);
 
-        $modelHelper->shouldReceive('getObjectId')->once()->andReturn($realModelHelper->getObjectId($model8));
+        $modelHelper->shouldReceive('getObjectId')->times(2)->andReturn($realModelHelper->getObjectId($model8));
 
         $modelHelper->shouldReceive('indexOnly')->with($model8, $index_one->indexName)->once()->andReturn(true);
-        $index_one->shouldReceive('addObject')->with($attributes_first);
+        $index_one->shouldReceive('addObject')->with($model8->getAlgoliaRecordDefault($index_one->indexName));
 
         $modelHelper->shouldReceive('indexOnly')->with($model8, $index_two->indexName)->once()->andReturn(true);
-        $index_two->shouldReceive('addObject')->with($attributes_second);
+        $index_two->shouldReceive('addObject')->with($model8->getAlgoliaRecordDefault($index_two->indexName));
 
         $this->assertEquals(null, $model8->pushToIndex());
     }

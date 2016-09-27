@@ -223,7 +223,7 @@ trait AlgoliaEloquentTrait
     /**
      * Methods.
      */
-    public function getAlgoliaRecordDefault($specificIndex = null)
+    public function getAlgoliaRecordDefault($specificIndex)
     {
         /** @var \AlgoliaSearch\Laravel\ModelHelper $modelHelper */
         $modelHelper = App::make('\AlgoliaSearch\Laravel\ModelHelper');
@@ -231,34 +231,16 @@ trait AlgoliaEloquentTrait
         $record = null;
 
         if (method_exists($this, static::$methodGetName)) {
-            $record = $this->{static::$methodGetName}();
+            $record = $this->{static::$methodGetName}($specificIndex);
         } else {
             $record = $this->toArray();
         }
 
-        /**
-         * If an array is found, it means most likely multiple indices are to be indexed.
-         * We push the objectID into both arrays so that we can identify the documents in both indices the same way.
-         */
-        if (is_array($record) && is_multidimensional($record)) {
-            foreach ($record as &$r) {
-                if (isset($r['objectID']) == false) {
-                    $r['objectID'] = $modelHelper->getObjectId($this);
-                }
-            }
-        } else {
-            if (isset($record['objectID']) == false) {
-                $record['objectID'] = $modelHelper->getObjectId($this);
-            }
+        if (isset($record['objectID']) == false) {
+            $record['objectID'] = $modelHelper->getObjectId($this);
         }
 
-        if ($specificIndex) {
-            if (! is_array($record) || ! isset($record[$specificIndex])) {
-                return $record;
-            }
-        }
-
-        return ($specificIndex) ? $record[$specificIndex] : $record;
+        return $record;
     }
 
     public function pushToIndex()
@@ -268,23 +250,9 @@ trait AlgoliaEloquentTrait
 
         $indices = $modelHelper->getIndices($this);
 
-        $algoliaAttributes = $this->getAlgoliaRecordDefault();
-
-        if (is_array($algoliaAttributes)) {
-            foreach ($indices as $index) {
-                foreach ($algoliaAttributes as $indiceName => $indiceAttributes) {
-                    if ($index->indexName === $indiceName) {
-                        if ($modelHelper->indexOnly($this, $index->indexName)) {
-                            $index->addObject($indiceAttributes);
-                        }
-                    }
-                }
-            }
-        } else {
-            foreach ($indices as $index) {
-                if ($modelHelper->indexOnly($this, $index->indexName)) {
-                    $index->addObject($this->getAlgoliaRecordDefault());
-                }
+        foreach ($indices as $index) {
+            if ($modelHelper->indexOnly($this, $index->indexName)) {
+                $index->addObject($this->getAlgoliaRecordDefault($index->indexName));
             }
         }
     }

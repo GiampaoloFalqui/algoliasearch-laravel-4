@@ -21,7 +21,7 @@ class Model4 extends Model
         $this->id3 = 1;
     }
 
-    public function getAlgoliaRecord()
+    public function getAlgoliaRecord($indexName)
     {
         $extraData = array(
             'name' => 'test',
